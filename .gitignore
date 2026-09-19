@@ -1,7 +1,6 @@
 .venv/
-__pychache__/
-*.__pychache__.env
+__pycache__/
+.env
 chroma_db/
-*.chroma_db
 *.db
 .vscode/
