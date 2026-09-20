@@ -1,4 +1,5 @@
-from langchain_chroma import Chroma
+from langchain_pinecone import PineconeVectorStore
+from pinecone import Pinecone
 from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
@@ -22,13 +23,15 @@ documents = pdf_Loader.load()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 split_docs = text_splitter.split_documents(documents)
 
-#it takes list of documents and creates a vectorstore from them. It also persists the vectorstore to disk for later use.
-vectorstore = Chroma.from_documents(split_docs, embedding=embeddings, persist_directory="./chroma_db")
 
-#it takes a string
-# vectorstore = Chroma.from_texts(texts="your text string", embedding=embeddings, persist_directory="./chroma_db")
+index_name = "first-index"  # Replace with your Pinecone index name, in server
+
+vectorstore = PineconeVectorStore.from_documents(split_docs, embedding=embeddings, index_name=index_name)
 
 retriever = vectorstore.as_retriever(search_kwargs={"k":3})
+
+
+
 
 prompt_template = ChatPromptTemplate.from_template("""
     Answer the question based on the following context:
@@ -65,10 +68,21 @@ while True:
     result = rag_chain.invoke(question)
     print("Answer:", result)
 
-# retrieved = retriever.invoke("What is decorator?")
-# print(format_docs(retrieved))
 
-#Reloading already persisted vectorstore from disk. This is useful when you want to use the vectorstore in a different script or after restarting the application.
-# vectorstore_reload = Chroma(persist_directory='./chroma_db', embedding_function=embeddings)
-# reload_retriever = vectorstore_reload.as_retriever()
+# pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+# index = pc.Index("my_index")
+# # Query directly to pinecone
+# query_vector = embeddings.embed_query("Explain FastAPI routing")
+# results = index.query(vector=query_vector, top_k=3)
+# print(results)
+
+# reload index and use in langchain
+# vectorstore = PineconeVectorStore(
+#     index_name="my_index",
+#     embedding=embeddings
+# )
+
+# retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
+
     
